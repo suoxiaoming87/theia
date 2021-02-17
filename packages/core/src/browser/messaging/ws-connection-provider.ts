@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import { injectable, interfaces, decorate, unmanaged } from 'inversify';
-import { JsonRpcProxyFactory, JsonRpcProxy } from '../../common';
+import { JsonRpcProxyFactory, JsonRpcProxy, Emitter, Event } from '../../common';
 import { WebSocketChannel } from '../../common/messaging/web-socket-channel';
 import { Endpoint } from '../endpoint';
 import ReconnectingWebSocket from 'reconnecting-websocket';
@@ -34,6 +34,12 @@ export interface WebSocketOptions {
 @injectable()
 export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebSocketOptions> {
 
+    protected readonly onSocketOpenedEmitter: Emitter<void> = new Emitter();
+    public onSocketOpened: Event<void> = this.onSocketOpenedEmitter.event;
+
+    protected readonly onSocketClosedEmitter: Emitter<void> = new Emitter();
+    public onSocketClosed: Event<void> = this.onSocketClosedEmitter.event;
+
     static createProxy<T extends object>(container: interfaces.Container, path: string, arg?: object): JsonRpcProxy<T> {
         return container.get(WebSocketConnectionProvider).createProxy<T>(path, arg);
     }
@@ -45,7 +51,11 @@ export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebS
         const url = this.createWebSocketUrl(WebSocketChannel.wsPath);
         const socket = this.createWebSocket(url);
         socket.onerror = console.error;
+        socket.onopen = () => {
+            this.onSocketOpenedEmitter.fire(undefined);
+        };
         socket.onclose = ({ code, reason }) => {
+            this.onSocketClosedEmitter.fire(undefined);
             for (const channel of [...this.channels.values()]) {
                 channel.close(code, reason);
             }
