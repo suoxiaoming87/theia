@@ -17,13 +17,16 @@
 import { postConstruct, injectable, inject, interfaces } from 'inversify';
 import {
     createPreferenceProxy, FrontendApplicationContribution, LabelProvider,
-    PreferenceContribution, PreferenceProxy, PreferenceSchema, PreferenceService
+    PreferenceContribution, PreferenceProxy, PreferenceSchema, PreferenceService, PreferenceScope
 } from '@theia/core/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import { WorkspaceService } from '@theia/workspace/lib/browser';
+import { CommandContribution, CommandRegistry, MessageService } from '@theia/core/lib/common';
 
 export function bindSampleFileWatching(bind: interfaces.Bind): void {
+    bind(SampleFileWatchingContribution).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).to(SampleFileWatchingContribution).inSingletonScope();
+    bind(CommandContribution).toService(SampleFileWatchingContribution);
     bind(PreferenceContribution).toConstantValue({ schema: FileWatchingPreferencesSchema });
     bind(FileWatchingPreferences).toDynamicValue(
         ctx => createPreferenceProxy(ctx.container.get(PreferenceService), FileWatchingPreferencesSchema)
@@ -43,14 +46,23 @@ const FileWatchingPreferencesSchema: PreferenceSchema = {
             type: 'boolean',
             default: false,
             description: 'Enable verbose file watching logs.'
+        },
+        'sample.min-max': {
+            type: 'number',
+            default: 1,
+            description: 'Test preference verifying min-max.',
+            minimum: 1,
+            maximum: 3,
         }
     }
 };
 
 @injectable()
-class SampleFileWatchingContribution implements FrontendApplicationContribution {
+class SampleFileWatchingContribution implements FrontendApplicationContribution, CommandContribution {
 
     protected verbose: boolean;
+
+    protected minMax = 'sample.min-max';
 
     @inject(FileService)
     protected readonly fileService: FileService;
@@ -60,6 +72,12 @@ class SampleFileWatchingContribution implements FrontendApplicationContribution 
 
     @inject(WorkspaceService)
     protected readonly workspaceService: WorkspaceService;
+
+    @inject(PreferenceService)
+    protected preferenceService: PreferenceService;
+
+    @inject(MessageService)
+    protected messageService: MessageService;
 
     @inject(FileWatchingPreferences)
     protected readonly fileWatchingPreferences: FileWatchingPreferences;
@@ -85,6 +103,23 @@ class SampleFileWatchingContribution implements FrontendApplicationContribution 
                     ? roots.map(root => this.labelProvider.getLongName(root.resource)).join('+')
                     : '<no workspace>';
                 console.log(`Sample File Watching: ${event.changes.length} file(s) changed! ${workspace}`);
+            }
+        });
+    }
+
+    registerCommands(commands: CommandRegistry): void {
+        commands.registerCommand({ id: 'sample.increment', label: 'Sample: Increment' }, {
+            execute: async () => {
+                const value = this.preferenceService.get<number>(this.minMax)! + 1;
+                await this.preferenceService.set(this.minMax, value, PreferenceScope.User);
+                this.messageService.info(`Sample Increment: ${this.minMax}: ${this.preferenceService.get(this.minMax)}`);
+            }
+        });
+        commands.registerCommand({ id: 'sample.decrement', label: 'Sample: Decrement' }, {
+            execute: async () => {
+                const value = this.preferenceService.get<number>(this.minMax)! - 1;
+                await this.preferenceService.set(this.minMax, value, PreferenceScope.User);
+                this.messageService.info(`Sample Decrement: ${this.minMax}: ${this.preferenceService.get(this.minMax)}`);
             }
         });
     }
