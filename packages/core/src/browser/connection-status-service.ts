@@ -132,7 +132,7 @@ export class FrontendConnectionStatusService extends AbstractConnectionStatusSer
             this.updateStatus(true);
             this.schedulePing();
         });
-        this.wsConnectionProvider.onSocketDidClose(event => {
+        this.wsConnectionProvider.onSocketDidClose(() => {
             this.clearTimeout(this.scheduledPing);
             this.updateStatus(false);
         });

@@ -31,19 +31,14 @@ export interface WebSocketOptions {
     reconnecting?: boolean;
 }
 
-export interface SocketDidClose {
-    code: number;
-    reason: string;
-}
-
 @injectable()
 export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebSocketOptions> {
 
     protected readonly onSocketDidOpenEmitter: Emitter<void> = new Emitter();
     readonly onSocketDidOpen: Event<void> = this.onSocketDidOpenEmitter.event;
 
-    protected readonly onSocketDidCloseEmitter: Emitter<SocketDidClose> = new Emitter();
-    readonly onSocketDidClose: Event<SocketDidClose> = this.onSocketDidCloseEmitter.event;
+    protected readonly onSocketDidCloseEmitter: Emitter<void> = new Emitter();
+    readonly onSocketDidClose: Event<void> = this.onSocketDidCloseEmitter.event;
 
     static createProxy<T extends object>(container: interfaces.Container, path: string, arg?: object): JsonRpcProxy<T> {
         return container.get(WebSocketConnectionProvider).createProxy<T>(path, arg);
@@ -62,8 +57,8 @@ export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebS
         socket.onclose = ({ code, reason }) => {
             for (const channel of [...this.channels.values()]) {
                 channel.close(code, reason);
-                this.fireSocketDidClose({ code: code, reason: reason });
             }
+            this.fireSocketDidClose();
         };
         socket.onmessage = ({ data }) => {
             this.handleIncomingRawMessage(data);
@@ -117,8 +112,8 @@ export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebS
         this.onSocketDidOpenEmitter.fire(undefined);
     }
 
-    protected fireSocketDidClose(event: SocketDidClose): void {
-        this.onSocketDidCloseEmitter.fire(event);
+    protected fireSocketDidClose(): void {
+        this.onSocketDidCloseEmitter.fire(undefined);
     }
 
 }
