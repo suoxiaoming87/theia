@@ -157,7 +157,7 @@ export class FrontendConnectionStatusService extends AbstractConnectionStatusSer
             this.updateStatus(true);
         } catch (e) {
             this.updateStatus(false);
-            await this.logger.trace(e);
+            await this.logger.error(e);
         }
     }
 
