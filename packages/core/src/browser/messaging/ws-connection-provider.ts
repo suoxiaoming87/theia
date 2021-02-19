@@ -31,14 +31,19 @@ export interface WebSocketOptions {
     reconnecting?: boolean;
 }
 
+export interface SocketDidClose {
+    code: number;
+    reason: string;
+}
+
 @injectable()
 export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebSocketOptions> {
 
-    protected readonly onSocketOpenedEmitter: Emitter<void> = new Emitter();
-    public onSocketOpened: Event<void> = this.onSocketOpenedEmitter.event;
+    protected readonly onSocketDidOpenEmitter: Emitter<void> = new Emitter();
+    readonly onSocketDidOpen: Event<void> = this.onSocketDidOpenEmitter.event;
 
-    protected readonly onSocketClosedEmitter: Emitter<void> = new Emitter();
-    public onSocketClosed: Event<void> = this.onSocketClosedEmitter.event;
+    protected readonly onSocketDidCloseEmitter: Emitter<SocketDidClose> = new Emitter();
+    readonly onSocketDidClose: Event<SocketDidClose> = this.onSocketDidCloseEmitter.event;
 
     static createProxy<T extends object>(container: interfaces.Container, path: string, arg?: object): JsonRpcProxy<T> {
         return container.get(WebSocketConnectionProvider).createProxy<T>(path, arg);
@@ -52,12 +57,12 @@ export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebS
         const socket = this.createWebSocket(url);
         socket.onerror = console.error;
         socket.onopen = () => {
-            this.onSocketOpenedEmitter.fire(undefined);
+            this.fireSocketDidOpen();
         };
         socket.onclose = ({ code, reason }) => {
-            this.onSocketClosedEmitter.fire(undefined);
             for (const channel of [...this.channels.values()]) {
                 channel.close(code, reason);
+                this.fireSocketDidClose({ code: code, reason: reason });
             }
         };
         socket.onmessage = ({ data }) => {
@@ -106,6 +111,14 @@ export class WebSocketConnectionProvider extends AbstractConnectionProvider<WebS
             maxRetries: Infinity,
             debug: false
         });
+    }
+
+    protected fireSocketDidOpen(): void {
+        this.onSocketDidOpenEmitter.fire(undefined);
+    }
+
+    protected fireSocketDidClose(event: SocketDidClose): void {
+        this.onSocketDidCloseEmitter.fire(event);
     }
 
 }

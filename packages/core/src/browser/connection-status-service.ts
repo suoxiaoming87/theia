@@ -128,11 +128,11 @@ export class FrontendConnectionStatusService extends AbstractConnectionStatusSer
 
     @postConstruct()
     protected init(): void {
-        this.wsConnectionProvider.onSocketOpened(() => {
+        this.wsConnectionProvider.onSocketDidOpen(() => {
             this.updateStatus(true);
             this.schedulePing();
         });
-        this.wsConnectionProvider.onSocketClosed(() => {
+        this.wsConnectionProvider.onSocketDidClose(event => {
             this.clearTimeout(this.scheduledPing);
             this.updateStatus(false);
         });
