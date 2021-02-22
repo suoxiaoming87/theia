@@ -111,7 +111,7 @@ describe('frontend-connection-status', function (): void {
             }
         };
         const mockILogger: ILogger = <ILogger>{
-            trace(loggable: Loggable): Promise<void> {
+            error(loggable: Loggable): Promise<void> {
                 return Promise.resolve(undefined);
             }
         };
@@ -123,8 +123,8 @@ describe('frontend-connection-status', function (): void {
         testContainer.bind(ConnectionStatusOptions).toConstantValue({ offlineTimeout: OFFLINE_TIMEOUT });
         testContainer.bind(WebSocketConnectionProvider).toConstantValue(mockWebSocketConnectionProvider);
 
-        sinon.stub(mockWebSocketConnectionProvider, 'onSocketOpened').value(mockSocketOpenedEmitter.event);
-        sinon.stub(mockWebSocketConnectionProvider, 'onSocketClosed').value(mockSocketClosedEmitter.event);
+        sinon.stub(mockWebSocketConnectionProvider, 'onSocketDidOpen').value(mockSocketOpenedEmitter.event);
+        sinon.stub(mockWebSocketConnectionProvider, 'onSocketDidClose').value(mockSocketClosedEmitter.event);
         sinon.stub(mockWebSocketConnectionProvider, 'onIncomingMessageActivity').value(mockIncomingMessageActivityEmitter.event);
 
         timer = sinon.useFakeTimers();
