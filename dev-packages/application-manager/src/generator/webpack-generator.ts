@@ -91,6 +91,16 @@ plugins.push(new CircularDependencyPlugin({
     exclude: /(node_modules|examples)[\\\\|\/]./,
     failOnError: false // https://github.com/nodejs/readable-stream/issues/280#issuecomment-297076462
 }));
+plugins.push(new webpack.IgnorePlugin({
+    checkResource(resource, context) {
+        if (process.platform === 'win32') {
+            context = context.replace(/\\\\/g, '/');
+        }
+        if (context.endsWith('/application-package/lib') && resource !== './environment') {
+            return true;
+        }
+    }
+}));
 
 module.exports = {
     entry: path.resolve(__dirname, 'src-gen/frontend/index.js'),
