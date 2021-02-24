@@ -85,7 +85,7 @@ export abstract class AbstractConnectionStatusService implements ConnectionStatu
     @inject(ILogger)
     protected readonly logger: ILogger;
 
-    protected constructor(@inject(ConnectionStatusOptions) @optional() protected readonly options: ConnectionStatusOptions = ConnectionStatusOptions.DEFAULT) { }
+    constructor(@inject(ConnectionStatusOptions) @optional() protected readonly options: ConnectionStatusOptions = ConnectionStatusOptions.DEFAULT) { }
 
     get onStatusChange(): Event<ConnectionStatus> {
         return this.statusChangeEmitter.event;
