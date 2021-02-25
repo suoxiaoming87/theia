@@ -2,6 +2,7 @@
 ## v1.11.0 - 2021
 
 - [core] revamp of tree search-box ui to align with vscode [#9005](https://github.com/eclipse-theia/theia/pull/9005)
+- [core] updated connection status service to prevent false positive alerts about offline mode [#9068](https://github.com/eclipse-theia/theia/pull/9068)
 
 <a name="breaking_changes_1.11.0">[Breaking Changes:](#breaking_changes_1.11.0)</a>
 
